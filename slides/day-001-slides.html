@@ -1,0 +1,122 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 1 — Linux Architecture, Boot Process, systemd Basics</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.5vw;line-height:1.65}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.3vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 1 · Day 1 of 180</div>
+<h1>Linux Architecture &amp;<br>the Boot Process</h1>
+<ul><li>Phase 0 built the mental model — today, what actually happens at boot</li>
+<li>Firmware → GRUB → initramfs → kernel → systemd → the first script</li>
+<li>~28 min theory · ~2h lab</li></ul></section>
+
+<section class="slide"><div class="kick">Recall — Phase 0</div>
+<h1>Before we start</h1>
+<ul><li>Character that tells you a path is absolute?</li>
+<li>What is root allowed to do, and how do you borrow its power for one command?</li>
+<li>Say back last week's one-line boot preview</li></ul></section>
+
+<section class="slide"><div class="kick">A · What Linux actually is</div>
+<h1>Kernel vs OS vs distro</h1>
+<ul><li><b>Kernel</b> — one program: hardware, processes, memory, files (Linus Torvalds, 1991)</li>
+<li><b>Distro</b> (RHEL/Fedora) = kernel + GNU userland + package manager + defaults</li>
+<li>Layers: hardware → kernel (kernel space/user space) → shell → apps</li></ul>
+<span class="cmd">uname -a && cat /etc/os-release && hostnamectl</span></section>
+
+<section class="slide"><div class="kick">B1 · Stage 1 &amp; 2</div>
+<h1>Firmware &amp; GRUB2</h1>
+<ul><li>Firmware (BIOS/UEFI) lives on the motherboard — POST, then hand off</li>
+<li>GRUB2 reads <code>/boot/grub2/grub.cfg</code>, shows the boot menu</li>
+<li>Loads the chosen <b>kernel image</b> + <b>initramfs</b> into memory, gets out of the way</li></ul></section>
+
+<section class="slide"><div class="kick">B2 · Stage 3</div>
+<h1>initramfs — the bridge</h1>
+<ul><li>Catch-22: kernel needs drivers to mount root, drivers live on that root</li>
+<li>initramfs = temporary root filesystem in RAM with just enough drivers</li>
+<li>Mounts the real root, then <b>gets thrown away</b> — cross it once</li></ul></section>
+
+<section class="slide"><div class="kick">B3 · Stage 4 &amp; 5</div>
+<h1>Kernel init → PID 1</h1>
+<ul><li>Kernel drops initramfs, mounts the <b>real</b> root filesystem</li>
+<li>Execs the first userspace program — always gets <b>PID 1</b></li>
+<li>On modern RHEL/Fedora, PID 1 = <code>systemd</code> — parent of everything else</li></ul>
+<span class="cmd">ps -p 1 -o pid,comm</span></section>
+
+<section class="slide"><div class="kick">B4 · Profiling boot</div>
+<h1>systemd-analyze</h1>
+<ul><li><code>systemd-analyze</code> — total boot time</li>
+<li><code>systemd-analyze blame</code> — slowest units, ranked</li>
+<li><code>systemd-analyze critical-chain</code> — the dependency chain that delayed it</li></ul>
+<span class="cmd">systemd-analyze && systemd-analyze blame | head -20</span></section>
+
+<section class="slide"><div class="kick">C1 · systemd basics</div>
+<h1>Units &amp; targets</h1>
+<ul><li>Everything is a <b>unit</b>: <code>.service</code>, <code>.target</code>, <code>.timer</code>, <code>.mount</code>...</li>
+<li><b>multi-user.target</b> — text-only, networked, what real servers run</li>
+<li><b>graphical.target</b> — multi-user + desktop, sits on top of it</li></ul>
+<span class="cmd">systemctl list-units --type=target && systemctl get-default</span></section>
+
+<section class="slide"><div class="kick">C2 · systemctl</div>
+<h1>Two different questions</h1>
+<ul><li><b>Loaded</b> (boot-time) → <code>enable</code>/<code>disable</code> — persists across reboots</li>
+<li><b>Active</b> (right now) → <code>start</code>/<code>stop</code>/<code>restart</code> — immediate only</li>
+<li><code>systemctl status</code> shows both at once</li></ul>
+<span class="cmd">systemctl status sshd</span></section>
+
+<section class="slide"><div class="kick">C3 · The flight recorder</div>
+<h1>journald &amp; journalctl</h1>
+<ul><li>Native, structured binary, one unified timeline — kernel to services</li>
+<li><code>-b</code> this boot · <code>-u</code> one unit · <code>-p err</code> errors only</li>
+<li><code>-f</code> follow live · <code>--since</code> filter by time</li></ul>
+<span class="cmd">journalctl -b | wc -l && journalctl -b -p err --no-pager | tail -10</span></section>
+
+<section class="slide"><div class="kick">Lab — orientation</div>
+<h1>Feel enabled vs active</h1>
+<ul><li>Confirm kernel/distro, run all three <code>systemd-analyze</code> tools</li>
+<li>List units by target and by service</li>
+<li>Stop/start a safe service — <b>Active</b> flips, <b>Loaded/enabled</b> doesn't</li></ul>
+<span class="cmd">sudo systemctl stop chronyd && systemctl status chronyd && sudo systemctl start chronyd</span></section>
+
+<section class="slide"><div class="kick">Lab — incremental project</div>
+<h1>Seed boot_logger.sh</h1>
+<ul><li>The spine of the whole 180-day course — grows every phase</li>
+<li><code>/opt/fresher_project/boot_logger.sh</code> — hostname, kernel, boot time, slowest units, errors</li>
+<li><code>chmod +x</code> and run it — read the output against today's lesson</li></ul>
+<span class="cmd">chmod +x boot_logger.sh && ./boot_logger.sh</span></section>
+
+<section class="slide"><div class="kick">Recap &amp; homework</div>
+<h1>The engine room</h1>
+<ul><li>Kernel + distro, layered · boot = firmware → GRUB → initramfs → kernel → PID 1</li>
+<li>systemd: units, targets, enabled vs active · journald: one queryable timeline</li></ul>
+<span class="cmd">Homework: re-run boot_logger.sh after a reboot, compare the slowest units</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

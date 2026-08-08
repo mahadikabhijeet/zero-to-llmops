@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 9 — Package Management: dnf/rpm, Repos, History, rpm -q Forensics</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.5vw;line-height:1.65}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.3vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+/* dense: only for slides that would clip; all others match the standard theme exactly */
+.slide.dense ul,.slide.dense ol{font-size:2.3vw;line-height:1.5}
+.slide.dense h1{margin-bottom:2vh}
+.slide.dense .cmd{font-size:2.15vw;margin-top:2vh}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 1 · Zero to LLMOps · Day 9</div>
+<h1>Package Management:<br>dnf, rpm, repos &amp; rollback</h1>
+<ul><li>Every command you've typed this week arrived inside a <b>package</b></li>
+<li>Three things that matter more than "how do I install stuff": <b>trace a file to its origin</b>, <b>undo a whole install</b>, <b>verify it's really from who it claims</b></li>
+<li>~60 min theory · 2h lab</li></ul></section>
+
+<section class="slide"><div class="kick">Recall — Days 7–8</div>
+<h1>Five from this week</h1>
+<ul><li><b>SIGTERM vs SIGKILL</b> — which can be trapped? · What does <code>kill -0</code> actually do?</li>
+<li><code>ps aux</code> vs <code>ps -ef</code> — what differs?</li>
+<li>What does <code>/proc/&lt;pid&gt;/fd/</code> show, and which day does it call back to?</li>
+<li>Name one thing you re-quizzed in Day 7's NotebookLM catch-up</li></ul>
+<span class="cmd">ps -p 1 -o pid,comm &nbsp;→&nbsp; where did that systemd binary come from? One command, this deck.</span></section>
+
+<section class="slide dense"><div class="kick">A · rpm — the low level</div>
+<h1><code>rpm</code> knows this box. <code>dnf</code> knows the world.</h1>
+<ul><li>RPM = the <b>format</b> + the <b>local database</b> · dnf = the layer that talks to repos, resolves deps, then hands off to rpm</li>
+<li><code>-q</code> version · <code>-qi</code> info · <code>-ql</code> file list · <code>-qa</code> everything · <b><code>-qf &lt;path&gt;</code> = which package owns this file</b> ← the forensics move</li>
+<li><span class="hl">"Not owned by any package" = local or hand-made. Nothing overwrites it — and <b>nothing restores it</b>.</span></li>
+<li><code>rpm -V</code> verifies against build-time checksums/perms. <b>Silence = clean.</b> <code>5</code>=checksum <code>S</code>=size <code>T</code>=time <code>M</code>=mode</li></ul>
+<span class="cmd">rpm -qf $(which bash) &nbsp;·&nbsp; rpm -qf /etc/passwd &nbsp;·&nbsp; sudo touch /usr/bin/tail; rpm -V coreutils</span></section>
+
+<section class="slide"><div class="kick">B · dnf — the daily driver</div>
+<h1>Search, install, and read the summary</h1>
+<ul><li><code>yum</code> is a symlink to <code>dnf</code> now — same tool, kept for muscle memory</li>
+<li><code>dnf search</code> · <code>dnf info</code> — <b>read the repo line</b>, it's how you catch a surprise third-party source</li>
+<li><code>install</code> / <code>remove</code> / <b><code>reinstall</code></b> (fixes a bad <code>rpm -V</code>) · <span class="hl">read the transaction summary before <code>y</code></span></li>
+<li><code>check-update</code> <b>exits 100</b> when updates are pending, not 0 · groups bundle packages — quote the name</li></ul>
+<span class="cmd">sudo dnf install tree &nbsp;·&nbsp; dnf group info "Development Tools"</span></section>
+
+<section class="slide dense"><div class="kick">C · repos and trust</div>
+<h1><code>gpgcheck=1</code> is not a formality</h1>
+<ul><li><code>/etc/yum.repos.d/*.repo</code> — still called <b>yum</b>.repos.d. Pure backward compat; the historical name usually wins in Linux</li>
+<li>Fields: <code>[id]</code> · <code>name=</code> · <code>baseurl=</code> or <code>metalink=</code> (mirror list, survives an outage) · <code>enabled=0/1</code> · <code>gpgcheck=1</code></li>
+<li><b><code>gpgcheck=1</code> = verify every package's signature before install.</b> <span class="hl">"Just set gpgcheck=0" is how people disable their own security — import the key instead</span></li>
+<li><code>dnf config-manager --add-repo</code>: <b>a trust decision, not a config step</b> — you're granting a stranger root</li></ul>
+<span class="cmd">grep -H 'gpgcheck *= *0' /etc/yum.repos.d/*.repo &amp;&amp; echo UNSIGNED || echo clean</span></section>
+
+<section class="slide dense"><div class="kick">D · history &amp; rollback</div>
+<h1>Undo an entire install as one transaction</h1>
+<ul><li>dnf records <b>every</b> transaction — id, time, user, package set. Recorded the set → can reverse the set</li>
+<li><code>dnf history</code> · <code>dnf history info &lt;id&gt;</code> (shows the deps you weren't tracking) · <b><code>dnf history undo &lt;id&gt;</code></b></li>
+<li><span class="hl">The undo is <b>appended as a new transaction</b>, not erased. Same honest-record pattern as git and Terraform state.</span></li>
+<li><b>Limits:</b> restores <b>packages</b> — not config edits, not data. A safety net, not a backup · <b>modularity</b>: just know the word</li></ul>
+<span class="cmd">dnf history info last &nbsp;·&nbsp; sudo dnf history undo last &nbsp;·&nbsp; sudo dnf install -y tree</span></section>
+
+<section class="slide"><div class="kick">Putting it together</div>
+<h1>"What is this file and can I touch it?"</h1>
+<ul><li><b>1. Who owns it?</b> <code>rpm -qf /path</code> — unowned means treat it with <em>more</em> care, nothing will restore it</li>
+<li><b>2. What came with it?</b> <code>rpm -ql &lt;pkg&gt;</code> — finds its config and its docs</li>
+<li><b>3. Tampered?</b> <code>rpm -V &lt;pkg&gt;</code> — silence is good, codes mean investigate</li>
+<li><b>4. Broken → </b><code>sudo dnf reinstall &lt;pkg&gt;</code> · <b>5. Install broke the box → </b><code>dnf history undo &lt;id&gt;</code></li></ul>
+<span class="cmd">rpm -qf /usr/bin/tail → rpm -V coreutils → dnf reinstall coreutils → verify silent</span></section>
+
+<section class="slide"><div class="kick">Lab — ~2h</div>
+<h1>To the terminal — <code>day-009.md</code></h1>
+<ul><li>Part 1: rpm forensics — <code>-qf</code> on a binary <b>and</b> on <code>/etc/passwd</code>, then tamper-and-verify with <code>rpm -V</code></li>
+<li>Part 2: dnf daily ops — search, info, install <code>tree</code>, repolist, check-update (note the count, <b>don't full-update</b>), groups</li>
+<li>Part 3: the cycle — <code>history</code> → <code>history info</code> → <code>undo</code> → reinstall</li>
+<li>Part 4: read the repo fields · run the <b>gpgcheck audit</b></li></ul>
+<span class="cmd">rpm -qf /opt/fresher_project/boot_logger.sh → unowned → which is why Day 7 made you tarball it</span></section>
+
+<section class="slide dense"><div class="kick">Recap &amp; homework</div>
+<h1>Where software comes from, and how to undo it</h1>
+<ul><li><b><code>rpm -qf</code></b> traces a file to its package · unowned = yours alone · <code>rpm -V</code> silence = clean</li>
+<li><code>reinstall</code> fixes a flagged package file · <code>check-update</code> exits <b>100</b> · repos are a <b>trust decision</b>, <code>gpgcheck=1</code> stays on</li>
+<li><code>dnf history undo</code> reverses a transaction as a unit — <b>packages only, not your configs or data</b></li>
+<li><span class="hl">Tomorrow — Day 10, storage. First day where a typo can <b>destroy data</b>. Spare virtual disk, check three times. Come in awake.</span></li></ul>
+<span class="cmd">Homework: 6 Qs → NotebookLM · reps: Day 8 (1-back), Day 6 (3-back — the awk one)</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

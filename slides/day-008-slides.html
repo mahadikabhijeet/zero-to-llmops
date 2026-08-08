@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 8 — Processes &amp; Signals: ps/top, kill, nice, jobs, /proc</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.5vw;line-height:1.65}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.3vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+/* dense: only for slides that would clip; all others match the standard theme exactly */
+.slide.dense ul,.slide.dense ol{font-size:2.3vw;line-height:1.5}
+.slide.dense h1{margin-bottom:2vh}
+.slide.dense .cmd{font-size:2.15vw;margin-top:2vh}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 1 · Zero to LLMOps · Day 8 · Week 2</div>
+<h1>Processes &amp; Signals:<br>ps, kill, nice, jobs, /proc</h1>
+<ul><li>Week 1 was things that <b>sit still</b> — files, users, permissions, text</li>
+<li>Today: the machine while it's <b>running</b> — and how you talk to what's running</li>
+<li><span class="hl">Half of production ops is one sentence: "something is running that shouldn't be, or isn't running that should"</span></li></ul></section>
+
+<section class="slide"><div class="kick">Recall — Days 5–7</div>
+<h1>Five from last week</h1>
+<ul><li>The "most common first" idiom? · What does <code>NF</code> mean in awk?</li>
+<li>Why must <code>usermod -G</code> be paired with <b>-a</b>?</li>
+<li>What does <b>SGID</b> do on a directory?</li>
+<li>Boot-stage order, firmware → PID 1 — <span class="hl">and that's today's hook</span></li></ul>
+<span class="cmd">ps -p 1 -o pid,ppid,comm &nbsp;→&nbsp; PPID 0: nothing launched it. The kernel did.</span></section>
+
+<section class="slide"><div class="kick">A · seeing what runs</div>
+<h1>Two syntaxes, one process table</h1>
+<ul><li><code>ps aux</code> = BSD, <b>no dash</b>, gives %CPU/%MEM · <code>ps -ef</code> = System V, <b>with dash</b>, gives PPID clearly. Read both</li>
+<li><b>STAT</b>: <b>R</b> running · <b>S</b> sleeping (the healthy default) · <b>D</b> uninterruptible I/O — <span class="hl">can't be killed, not even -9</span> · <b>T</b> stopped · <b>Z</b> zombie</li>
+<li>A <b>zombie is already dead</b> — just an exit code awaiting reaping. Fix the <b>parent</b>. Orphans re-parent to PID 1 and systemd reaps them</li>
+<li><code>top</code>: <b>M</b> memory · <b>P</b> CPU · <b>1</b> per-core · <b>q</b> quit · <code>top -b -n1</code> for scripts. <code>pstree -p</code> = the family tree back to PID 1</li></ul>
+<span class="cmd">ps -eo stat --no-headers | sort | uniq -c | sort -rn &nbsp;←&nbsp; yesterday's idiom, on process states</span></section>
+
+<section class="slide"><div class="kick">B · signals</div>
+<h1>SIGTERM asks. SIGKILL doesn't.</h1>
+<ul><li><b>SIGTERM (15)</b> — the default from plain <code>kill</code>. <b>Catchable</b>: flush buffers, finish the request, drop the lock file, exit cleanly</li>
+<li><b>SIGKILL (9)</b> — <b>cannot be caught, blocked or ignored.</b> No cleanup, half-written files. <span class="hl">TERM first, wait, verify, THEN escalate</span></li>
+<li><b>SIGHUP (1)</b> = "reload your config" for daemons · <b>SIGINT (2)</b> = what Ctrl-C sends</li>
+<li><code>kill -0 PID</code> sends nothing — pure liveness check · <b>always <code>pgrep -af</code> before <code>pkill -f</code>. Look before you shoot.</b></li></ul>
+<span class="cmd">trap "echo CAUGHT SIGTERM" SIGTERM &nbsp;→&nbsp; kill %1 prints it · kill -9 %1 is silent</span></section>
+
+<section class="slide dense"><div class="kick">C · priority &amp; job control</div>
+<h1>High nice = low priority</h1>
+<ul><li>Nice runs <b>-20 to 19</b>. "Nice" means nice <em>to others</em> — <b>19 = generous = less CPU</b>. Only <b>root</b> goes negative</li>
+<li><code>nice -n 10 cmd</code> to start · <code>renice -n 5 -p PID</code> to change a running one</li>
+<li><code>&amp;</code> · <code>jobs -l</code> · <b>Ctrl-Z suspends</b> (state T, not killed) · <code>bg %1</code> · <code>fg %1</code> — <code>%1</code> is a <b>job number, not a PID</b></li>
+<li>Closing the shell SIGHUPs the children. <b><code>nohup</code> = deaf process; <code>disown</code> = forgetful shell.</b> <span class="hl">Real life: tmux. Real service: systemd — Day 12.</span></li></ul>
+<span class="cmd">nohup sleep 120 &gt; out 2&gt;&amp;1 &amp; &nbsp;·&nbsp; disown %1 &nbsp;·&nbsp; pgrep -af 'sleep 120'</span></section>
+
+<section class="slide"><div class="kick">D · /proc and lsof</div>
+<h1>Day 1's promise, kept</h1>
+<ul><li><b>"The kernel exposes its state as files"</b> — <code>/proc</code> isn't on disk, it's kernel memory rendered as text on read</li>
+<li><code>cmdline</code>/<code>environ</code> are <b>null-separated</b> → <code>tr '\0' ' '</code> · <code>status</code> has State + <b>VmRSS</b> · <code>cwd</code> = where it writes</li>
+<li><b><code>/proc/$$/fd/</code> — 0, 1, 2. Day 2's file descriptors, as actual listable files.</b> Not a metaphor any more</li>
+<li><code>lsof -i :22</code> = <b>"what is listening on this port"</b> — the most-typed question in ops · <code>ss -tlnp</code> when lsof isn't installed</li></ul>
+<span class="cmd">ls -l /proc/$$/fd/ &nbsp;·&nbsp; grep -E '^(State|VmRSS)' /proc/$$/status &nbsp;·&nbsp; sudo lsof -i :22</span></section>
+
+<section class="slide"><div class="kick">Putting it together</div>
+<h1>The 2am triage sequence</h1>
+<ul><li><b>1. What's eating the box?</b> <code>top</code> → P or M · or <code>ps aux --sort=-pcpu | head</code></li>
+<li><b>2. What IS that thing?</b> <code>/proc/PID/cmdline</code>, its PPID — <span class="hl">identify before you touch. Killing something you don't recognize causes outages.</span></li>
+<li><b>3. What's it doing?</b> <code>lsof -p PID</code>, <code>/proc/PID/cwd</code></li>
+<li><b>4. Decide</b> — sometimes the answer is <code>renice</code>, not kill. <b>5. If you kill: TERM → wait → <code>kill -0</code> to verify → only then -9</b></li></ul>
+<span class="cmd">kill $PID &amp;&amp; sleep 1 &amp;&amp; (kill -0 $PID 2&gt;/dev/null &amp;&amp; echo escalate || echo "gone cleanly")</span></section>
+
+<section class="slide"><div class="kick">Lab — ~2h</div>
+<h1>To the terminal — <code>day-008.md</code></h1>
+<ul><li>Part 1: <code>ps aux</code> vs <code>ps -ef</code> column mapping · <code>pstree</code> · <code>top</code> sorted by memory</li>
+<li>Part 2: signals — <code>kill -0</code>, then <b>watch SIGTERM get caught and SIGKILL not</b> with <code>trapdemo.sh</code></li>
+<li>Part 3: <code>nice</code>/<code>renice</code> (incl. the permission denial) · the full Ctrl-Z / bg / fg cycle · <code>nohup</code> + <code>disown</code></li>
+<li>Part 4: <code>/proc/$$</code>, <code>status</code>, <code>fd/</code> · <code>lsof -i :22</code></li></ul>
+<span class="cmd">No boot_logger.sh change today — this is the groundwork for Day 12</span></section>
+
+<section class="slide"><div class="kick">Recap &amp; homework</div>
+<h1>Find it, understand it, then stop it</h1>
+<ul><li>STAT: S is healthy · <b>D can't be killed at all</b> · Z is already dead — fix the parent</li>
+<li><b>SIGTERM catchable, SIGKILL never</b> · <code>kill -0</code> to probe · <code>pgrep -af</code> before <code>pkill -f</code></li>
+<li>High nice = low priority, root only for negative · <code>nohup</code> = deaf process, <code>disown</code> = forgetful shell</li>
+<li><code>/proc/PID/fd/</code> is Day 2 made visible · <code>lsof -i :PORT</code> / <code>ss -tlnp</code> for "who's listening"</li></ul>
+<span class="cmd">Homework: watch both kills yourself · 6 Qs → NotebookLM · reps: Day 7 (1-back), Day 5 (3-back)</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

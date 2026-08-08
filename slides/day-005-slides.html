@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 5 — Text Processing I: grep and Regex Fundamentals</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.5vw;line-height:1.65}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.3vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+/* dense: only for slides that would clip; all others match the standard theme exactly */
+.slide.dense ul,.slide.dense ol{font-size:2.3vw;line-height:1.5}
+.slide.dense h1{margin-bottom:2vh}
+.slide.dense .cmd{font-size:2.15vw;margin-top:2vh}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 1 · Zero to LLMOps · Day 5</div>
+<h1>Text Processing I:<br>grep &amp; regex fundamentals</h1>
+<ul><li>Yesterday: <b>who</b> is allowed to read the file</li>
+<li>Today: once you can read it — how do you find the <b>one line that matters</b>?</li>
+<li>~60 min theory · 2h lab · you leave with a cheatsheet you'll use tomorrow</li></ul></section>
+
+<section class="slide"><div class="kick">Recall — Days 3–4</div>
+<h1>Before we start pattern-matching</h1>
+<ul><li>Convert <code>rwxr-x---</code> to octal</li>
+<li>What does <b>SGID</b> do on a directory — and why is it on <code>logs/</code>?</li>
+<li>Why <code>/sbin/nologin</code> for <code>svc_fresher</code>? · How do <b>ACLs</b> go beyond plain rwx?</li>
+<li>The sticky bit's classic example?</li></ul>
+<span class="cmd">ls -ld /tmp &nbsp;·&nbsp; ls -ld /opt/fresher_project/logs &nbsp;·&nbsp; getfacl /opt/fresher_project</span></section>
+
+<section class="slide dense"><div class="kick">A · grep + exit codes</div>
+<h1><code>g/re/p</code> — globally search a regex, print</h1>
+<ul><li><code>grep 'PAT' FILE</code> — <b>always single-quote the pattern</b>, or the shell eats it</li>
+<li>Exit codes are <b>three-way</b>: <b>0</b> found · <b>1</b> ran fine, found nothing · <b>2</b> grep itself failed</li>
+<li>"found nothing" ≠ "error" — that's why grep composes with Day 2's <code>&amp;&amp;</code> / <code>||</code></li>
+<li><code>grep -q</code> = quiet, exit code only → <span class="hl">the "is this already configured?" idiom</span></li></ul>
+<span class="cmd">grep 'root' /etc/passwd; echo $? &nbsp;·&nbsp; grep -q 'wheel' /etc/group &amp;&amp; echo exists</span></section>
+
+<section class="slide"><div class="kick">A2 · the flags worth muscle memory</div>
+<h1>Nine flags do 95% of the work</h1>
+<ul><li><b>-i</b> ignore case (logs have Error/ERROR/error) · <b>-n</b> line numbers · <b>-w</b> whole word (<code>root</code> ≠ <code>chroot</code>)</li>
+<li><b>-v</b> invert — the noise-stripper · <b>-c</b> count instead of lines · <b>-l</b> filenames only</li>
+<li><b>-r</b> recurse a tree · <b>-A/-B/-C N</b> context (the line before the error is the useful one)</li>
+<li><b>-o</b> print only the matched part — <span class="hl">your regex debugger</span></li></ul>
+<span class="cmd">grep -in root /etc/passwd &nbsp;·&nbsp; grep -vc nologin /etc/passwd &nbsp;·&nbsp; grep -in -C2 fail /tmp/boot.log</span></section>
+
+<section class="slide"><div class="kick">B · anchors &amp; classes</div>
+<h1>Say <em>where</em>, then say <em>what</em></h1>
+<ul><li>Anchors match a <b>position, not a character</b>: <code>^</code> start · <code>$</code> end · <code>^$</code> = <b>a blank line</b></li>
+<li>In <code>/etc/passwd</code>, <code>^root</code> = "username is root", <code>bash$</code> = "login shell is bash"</li>
+<li>Classes: <code>[abc]</code> · <code>[^abc]</code> = NOT (<span class="hl">caret <em>inside</em> brackets = negate, outside = start-of-line</span>)</li>
+<li>POSIX <code>[[:digit:]] [[:alpha:]] [[:space:]]</code> — locale-safe &amp; self-documenting · <b>a bare <code>.</code> matches ANY char — escape it <code>\.</code></b></li></ul>
+<span class="cmd">grep '^root' /etc/passwd &nbsp;·&nbsp; grep -n '^$' /tmp/blanks.txt &nbsp;·&nbsp; echo 10x0y0z5 | grep '10.0.0.5'</span></section>
+
+<section class="slide"><div class="kick">C · quantifiers · BRE vs ERE</div>
+<h1>How many — and which dialect</h1>
+<ul><li><code>*</code> 0+ · <code>+</code> 1+ · <code>?</code> 0-or-1 · <code>{3}</code> · <code>{2,5}</code> · <code>{3,}</code> — they attach to <b>the one thing before them</b></li>
+<li><b>BRE</b> (plain grep) needs <code>\+ \? \{ \} \( \) \|</code> · <b>ERE</b> (<code>-E</code>) doesn't — the escaping is <b>inverted</b></li>
+<li><span class="hl">The trap: <code>grep 'ro+t'</code> throws no error — it silently hunts a literal plus sign. <b>Default to <code>-E</code>.</b></span></li>
+<li>Alternation <code>cat|dog</code> · grouping <code>(ab)+</code> · <code>egrep</code> = legacy <code>grep -E</code> · greedy only (no lazy — that's PCRE)</li></ul>
+<span class="cmd">grep -E 'nologin|/bin/false' /etc/passwd &nbsp;·&nbsp; echo -e "ab\nabab" | grep -E '^(ab){2,}$'</span></section>
+
+<section class="slide dense"><div class="kick">D · the two keepers</div>
+<h1>Patterns you'll reuse for the rest of your career</h1>
+<ul><li><b>Find IPs in a log:</b> <code>[0-9]{1,3}(\.[0-9]{1,3}){3}</code> — built from a group + an escaped dot + <code>{3}</code></li>
+<li>Caveat: matches <code>999.999.999.999</code> too — <b>right trade for log scanning</b></li>
+<li><b>Strip comments &amp; blanks:</b> <code>grep -Ev '^\s*(#|$)'</code> — 150-line config → the dozen lines that matter</li>
+<li><code>\s</code> is a <b>GNU extension</b> (fine on RHEL/Fedora/Ubuntu) · portable form is <code>[[:space:]]*</code></li></ul>
+<span class="cmd">ip a | grep -oE '[0-9]{1,3}(\.[0-9]{1,3}){3}' &nbsp;·&nbsp; grep -Ev '^\s*(#|$)' /etc/ssh/sshd_config</span></section>
+
+<section class="slide"><div class="kick">Lab — ~2h</div>
+<h1>To the terminal — <code>day-005.md</code></h1>
+<ul><li>Setup: <code>mkdir -p ~/lab05</code> · <code>journalctl -b --no-pager &gt; ~/lab05/boot.log</code></li>
+<li>Part 1: grep basics &amp; flags on real system files. Part 2: anchors, classes, the blank-line hunt</li>
+<li>Part 3: quantifiers &amp; alternation — run BRE <code>ro+t</code> and ERE <code>ro+t</code> <b>side by side</b> and see the trap</li>
+<li>Part 4: journald boot-health count · then write <code>~/lab05/grep-cheatsheet.txt</code> — <b>8 commands, your own words</b></li></ul>
+<span class="cmd">No boot_logger.sh change today — Day 6's awk work evolves it next</span></section>
+
+<section class="slide dense"><div class="kick">Recap &amp; homework</div>
+<h1>Stop reading files. Interrogate them.</h1>
+<ul><li>Exit codes 0/1/2 · <code>grep -q PAT f &amp;&amp; ...</code> is how real scripts check state</li>
+<li><code>^</code> <code>$</code> are positions · <code>^$</code> = blank line · caret inside <code>[ ]</code> negates · <code>\.</code> for a literal dot</li>
+<li>Quantifiers bind to one thing · <b>default to <code>-E</code></b> — BRE's literal-plus bug bites everyone</li>
+<li>Keepers: <code>grep -Ev '^\s*(#|$)'</code> and the loose IP match · <code>-o</code> to debug any pattern</li></ul>
+<span class="cmd">Homework: cheatsheet written in YOUR words · 6 recall Qs → NotebookLM (1-3-7-21)</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

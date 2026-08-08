@@ -1,0 +1,94 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 0b — The Terminal and the Shell</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.6vw;line-height:1.7}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.4vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 0 · Foundations · Day 0b of 5</div>
+<h1>The Terminal<br>and the Shell</h1>
+<ul><li>First real hands-on day — a terminal, for real</li>
+<li>Goal: comfort typing, no fear</li>
+<li>~30 min theory · ~45 min lab, all commands are safe</li></ul></section>
+
+<section class="slide"><div class="kick">Recall — Day 0a</div>
+<h1>Before we start</h1>
+<ul><li>The OS's four jobs?</li>
+<li>Linux kernel vs distro?</li>
+<li>Why CLI over GUI for servers?</li></ul></section>
+
+<section class="slide"><div class="kick">A · Get the words right</div>
+<h1>Terminal · Shell · Command</h1>
+<ul><li><b>Terminal</b> = the window · <b>Shell</b> = bash, reads what you type</li>
+<li>Shape: <code>command  -options  arguments</code></li>
+<li>A command is just a program's name — the shell finds it on disk and runs it</li></ul>
+<span class="cmd">ls -l /home  →  command · option · argument</span></section>
+
+<section class="slide"><div class="kick">B · The #1 skill</div>
+<h1>Asking for help</h1>
+<ul><li><code>man &lt;command&gt;</code> — full manual page</li>
+<li><code>&lt;command&gt; --help</code> — quick summary</li>
+<li><code>Ctrl+C</code> — cancel something stuck</li>
+<li><b>Rule:</b> man it before you ask the trainer</li></ul>
+<span class="cmd">man ls  ·  ls --help | head -20</span></section>
+
+<section class="slide"><div class="kick">C · Six safe commands</div>
+<h1>Own these today</h1>
+<ul><li><code>whoami</code> · <code>date</code> · <code>pwd</code></li>
+<li><code>ls</code> · <code>echo &lt;text&gt;</code> · <code>clear</code></li>
+<li>None of these six can break anything</li></ul></section>
+
+<section class="slide"><div class="kick">Live — the prompt</div>
+<h1>Read it before you type</h1>
+<ul><li><code>username@hostname:~$</code> — who you are, roughly where you are</li>
+<li>Get used to glancing at it constantly</li></ul></section>
+
+<section class="slide"><div class="kick">A taste of variables</div>
+<h1>echo $USER</h1>
+<ul><li><code>$USER</code> gets <b>substituted</b> with your username</li>
+<li>The shell can substitute things in, not just print literal text</li>
+<li>Full lesson on variables comes much later</li></ul>
+<span class="cmd">echo $USER</span></section>
+
+<section class="slide"><div class="kick">Practice</div>
+<h1>Break something small, on purpose</h1>
+<ul><li>Type <code>lls</code> instead of <code>ls</code></li>
+<li>"command not found" = the shell searched honestly, found no match</li>
+<li>Not the machine breaking — completely safe to see</li></ul></section>
+
+<section class="slide"><div class="kick">Recap &amp; homework</div>
+<h1>Comfort, not caution — yet</h1>
+<ul><li>Terminal = window · Shell = bash · Command = command-options-arguments</li>
+<li>#1 skill: <code>man</code> / <code>--help</code></li>
+<li>Six commands you now own: whoami, date, pwd, ls, echo, clear</li></ul>
+<span class="cmd">Homework: run 10 commands, screenshot the output</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

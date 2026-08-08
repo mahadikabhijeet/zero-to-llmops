@@ -1,0 +1,91 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 0c — Files and the Filesystem Tree</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.5vw;line-height:1.65}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.3vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 0 · Foundations · Day 0c of 5</div>
+<h1>Files and the<br>Filesystem Tree</h1>
+<ul><li>Everything is a file — one tree, one root</li>
+<li>Today: make files/folders on purpose, delete one on purpose</li>
+<li>~30 min theory · ~45 min lab</li></ul></section>
+
+<section class="slide"><div class="kick">Recall — Day 0b</div>
+<h1>Before we start</h1>
+<ul><li>Terminal vs shell?</li>
+<li>Three parts of a command's shape?</li>
+<li>Two ways to ask a command for help?</li></ul></section>
+
+<section class="slide"><div class="kick">A · The big idea</div>
+<h1>Everything is a file</h1>
+<ul><li>Documents, devices, even kernel info — all files</li>
+<li>One consistent way to interact with very different things</li>
+<li>A <b>directory</b> is a special file that holds references to other files</li></ul></section>
+
+<section class="slide"><div class="kick">B · One tree, starting at /</div>
+<h1>The big branches</h1>
+<ul><li><b>/home</b> your files · <b>/etc</b> config · <b>/var</b> changing data (logs)</li>
+<li><b>/tmp</b> scratch · <b>/usr</b> installed software · <b>/opt</b> third-party</li>
+<li><b>/bin</b> essential commands — several you already used live here</li></ul>
+<span class="cmd">ls /</span></section>
+
+<section class="slide"><div class="kick">C · New commands</div>
+<h1>Make &amp; look</h1>
+<ul><li><code>mkdir</code> make a directory · <code>touch</code> create empty file</li>
+<li><code>ls -l</code> detail: perms, size, modified time</li>
+<li><code>cat</code> print a file's contents · <code>rm</code> remove — <b>no undo</b></li></ul></section>
+
+<section class="slide"><div class="kick">Live — walk the tree</div>
+<h1>Just looking first</h1>
+<ul><li><code>ls /</code> · <code>ls /home</code> · <code>ls /etc | head -20</code></li>
+<li><code>pwd</code> — confirm you're safely in your own home space</li></ul></section>
+
+<section class="slide"><div class="kick">Lab — build your own tree</div>
+<h1>mkdir → touch → echo → cat</h1>
+<ul><li><code>mkdir practice &amp;&amp; cd practice</code></li>
+<li><code>mkdir notes &amp;&amp; mkdir notes/day1</code></li>
+<li><code>touch notes/day1/hello.txt</code></li>
+<li><code>echo "my first file" &gt; notes/day1/hello.txt</code> then <code>cat</code> it back</li></ul></section>
+
+<section class="slide"><div class="kick">Remove, carefully</div>
+<h1>rm — respect it</h1>
+<ul><li><code>touch</code> a scratch file, then <code>rm</code> it immediately — lowest stakes</li>
+<li>Before any real <code>rm</code>: <span class="hl">"could I get this back?" → no</span></li>
+<li>That pause is the entire safety net</li></ul></section>
+
+<section class="slide"><div class="kick">Recap &amp; homework</div>
+<h1>Structure, on purpose</h1>
+<ul><li>One tree, one root, every branch has a purpose</li>
+<li>Made a dir, made a file, wrote to it, read it, deleted one — carefully</li></ul>
+<span class="cmd">Homework: build your own 2-level folder tree, ≥3 files</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

@@ -1,0 +1,91 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 0d — Paths: Absolute vs Relative</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.5vw;line-height:1.65}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.3vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 0 · Foundations · Day 0d of 5</div>
+<h1>Paths: Absolute<br>vs Relative</h1>
+<ul><li>The single idea that unblocks everything later</li>
+<li>If it doesn't land, we slow down <b>here</b>, not later</li>
+<li>~25 min theory · ~50 min lab</li></ul></section>
+
+<section class="slide"><div class="kick">Recall — Day 0c</div>
+<h1>Before we start</h1>
+<ul><li>Character for filesystem root?</li>
+<li>Three top-level directories and their purpose?</li>
+<li><code>mkdir</code> vs <code>touch</code>?</li></ul></section>
+
+<section class="slide"><div class="kick">A · Full address</div>
+<h1>Absolute paths</h1>
+<ul><li>Always starts with <code>/</code> — the root</li>
+<li>Means the <b>same thing</b> no matter where you currently stand</li>
+<li>Longer to type, always reliable</li></ul>
+<span class="cmd">/home/student/notes/day1/hello.txt</span></section>
+
+<section class="slide"><div class="kick">B · From where you stand</div>
+<h1>Relative paths</h1>
+<ul><li>Does <b>not</b> start with <code>/</code></li>
+<li>Directions from your <b>current working directory</b> — what <code>pwd</code> shows</li>
+<li>Yesterday's <code>notes/day1/hello.txt</code> was relative the whole time</li></ul></section>
+
+<section class="slide"><div class="kick">C · Four shortcuts</div>
+<h1>. .. ~ -</h1>
+<ul><li><code>.</code> here · <code>..</code> up one level</li>
+<li><code>~</code> your home, always absolute</li>
+<li><code>-</code> (with <code>cd -</code>) the previous directory you were in</li></ul></section>
+
+<section class="slide"><div class="kick">Live experiment</div>
+<h1>Same path, two locations</h1>
+<ul><li><code>cd / && ls home</code> — relative, works from root</li>
+<li><code>ls /home</code> — absolute, works from anywhere</li>
+<li><code>cd /tmp && ls home</code> — <b>fails</b> — this IS the lesson</li></ul></section>
+
+<section class="slide"><div class="kick">Move deliberately</div>
+<h1>cd .. · cd . · cd ~ · cd -</h1>
+<ul><li><code>cd ~/practice/notes/day1</code> → <code>cd ..</code> → <code>cd ..</code></li>
+<li><code>cd .</code> — nothing changes, prove it with <code>pwd</code></li>
+<li><code>cd ~</code> then <code>cd -</code> toggle until automatic</li></ul></section>
+
+<section class="slide"><div class="kick">Get lost, get found</div>
+<h1>The safety net</h1>
+<ul><li>Chain relative moves without checking <code>pwd</code> — guess where you land</li>
+<li><code>pwd</code> always tells you where you are</li>
+<li><code>cd ~</code> always gets you home, no matter how lost</li></ul></section>
+
+<section class="slide"><div class="kick">Recap &amp; homework</div>
+<h1>The idea that unblocks everything</h1>
+<ul><li>Absolute: reliable from anywhere · Relative: depends on where you stand</li>
+<li><code>.</code> <code>..</code> <code>~</code> <code>-</code> — reserved relative shortcuts</li></ul>
+<span class="cmd">Homework: 5 locations, 2 ways each (absolute + relative)</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

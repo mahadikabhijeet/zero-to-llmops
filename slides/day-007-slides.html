@@ -1,0 +1,106 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 7 — REVIEW: Days 1–6</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.5vw;line-height:1.65}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.3vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+/* dense: only for slides that would clip; all others match the standard theme exactly */
+.slide.dense ul,.slide.dense ol{font-size:2.3vw;line-height:1.5}
+.slide.dense h1{margin-bottom:2vh}
+.slide.dense .cmd{font-size:2.15vw;margin-top:2vh}
+ol{list-style:none;counter-reset:q;font-size:2.4vw;line-height:1.6}
+ol li{counter-increment:q;padding-left:2.1em}
+ol li::before{content:counter(q) ".";color:#ffcf6b;font-weight:700;font-family:ui-monospace,monospace}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 1 · Zero to LLMOps · Day 7</div>
+<h1>REVIEW —<br>Week 1, Days 1–6</h1>
+<ul><li>No new material. <b>This is the day that decides whether the last six were worth anything</b></li>
+<li>You <em>recognize</em> all of it. Recognizing isn't <b>retrieving</b> — and incidents only ever ask you to retrieve</li>
+<li>Quiz · redo your weakest lab · project cleanup &amp; backup · NotebookLM catch-up</li></ul></section>
+
+<section class="slide"><div class="kick">How today works</div>
+<h1>Three rules</h1>
+<ul><li><b>Answer before you look.</b> "I don't know" is a useful answer — a dressed-up guess is the only wrong move</li>
+<li><b>Being wrong is fine.</b> I'm not scoring you, I'm mapping you. A miss today is free</li>
+<li><b>Anything you fumble, we prove on the box.</b> What you type sticks; what you hear doesn't</li>
+<li><span class="hl">Why 1-3-7-21: memory falls off a cliff early, then flattens. Re-test just before the drop and the curve resets flatter each time. Four small efforts beat one cram.</span></li></ul></section>
+
+<section class="slide"><div class="kick">Quiz · part 1</div>
+<h1>Boot, journal, redirection, accounts</h1>
+<ol><li>Order the boot stages: firmware, GRUB, kernel init, initramfs, PID 1 exec</li>
+<li><code>journalctl -b -1</code> — what does it show, and what must be true for it to work?</li>
+<li><code>&gt;</code> vs <code>&gt;&gt;</code> vs <code>2&gt;&amp;1</code> — and <b>why does order matter</b> between the two forms?</li>
+<li>What's in <code>/etc/shadow</code> that isn't in <code>/etc/passwd</code>, and why is it root-only?</li>
+<li>Why must <code>usermod -G</code> be paired with <code>-a</code>?</li></ol>
+<span class="cmd">ls -d /var/log/journal &nbsp;·&nbsp; ls /etc /nosuchdir 2&gt;&amp;1 &gt; wrong.txt</span></section>
+
+<section class="slide"><div class="kick">Quiz · part 2</div>
+<h1>Permissions and text processing</h1>
+<ol start="6"><li>Convert <code>rwxr-x---</code> to octal · what does <b>SGID</b> do on a directory?</li>
+<li>How does an <b>ACL</b> grant differ from standard rwx?</li>
+<li><b>BRE vs ERE</b> — which metacharacters need <code>-E</code> to work unescaped?</li>
+<li>Why does <code>uniq -c</code> need pre-sorted input · what's the "most common first" idiom?</li>
+<li>In awk: <code>NF</code>, <code>NR</code>, <code>$0</code> — and how do you set a custom field separator?</li></ol>
+<span class="cmd">getfacl /opt/fresher_project &nbsp;·&nbsp; awk -F: '{print $7}' /etc/passwd | sort | uniq -c | sort -rn</span></section>
+
+<section class="slide"><div class="kick">Block 2 · ~45 min, yours</div>
+<h1>Redo your weakest lab</h1>
+<ul><li>Pick the one you were <b>least confident</b> in — usually Day 4 ACLs, Day 5 quantifiers, or Day 6 awk fields</li>
+<li><b>Redo it from scratch with the day file CLOSED.</b> Work from the goal, reconstruct the commands</li>
+<li><code>man</code> is allowed. The day file is not. Get stuck, sit in it, try something</li>
+<li><span class="hl">Then compare — and <b>write the gap down specifically</b>. "I guessed 4000 for SGID, it's 2000." That list is worth more than the redo.</span></li></ul>
+<span class="cmd">mkdir -p ~/lab07/redo ~/lab-notes &nbsp;·&nbsp; : &gt; ~/lab-notes/day07-gaps.txt</span></section>
+
+<section class="slide dense"><div class="kick">Block 3 · project cleanup</div>
+<h1>Verify the Week-1 baseline, then snapshot it</h1>
+<ul><li>Should be true: <code>boot_logger.sh</code> = Day 1 report + Day 2 split logs/tee/prune + Day 4 <code>umask 027</code> + Day 6 awk summary</li>
+<li><code>logs/</code> = <b>2750</b>, <code>svc_fresher:devops-trainees</code> · root = <b>750</b> + your ACL · runs clean as the service account</li>
+<li>Baseline note <code>~/lab-notes/week1-state.txt</code>, then a dated tarball — and <b><code>tar tzf</code> it. An unverified backup is a rumour.</b></li>
+<li><span class="hl">Why not git? Phase 2, Day 31 — you get the tool <em>after</em> you feel the problem. Next change: <b>Day 12</b>.</span></li></ul>
+<span class="cmd">tar czf ~/backups/fresher_project_day07.tar.gz -C /opt fresher_project</span></section>
+
+<section class="slide dense"><div class="kick">Block 4 · spacing ritual</div>
+<h1>NotebookLM catch-up</h1>
+<ul><li>Today's reps: <b>Day 6</b> (1 back) · <b>Day 4</b> (3 back) · <b>Day 1</b> (7 back). No 21 yet — that starts Day 21</li>
+<li>Review days sit here <b>because</b> the interval lands on 1-3-7. The calendar was built around it</li>
+<li>Load day files 1–6, then: <em>"10 exam-style Qs on boot, permissions, text processing — recall→troubleshooting. <b>Don't show answers until I respond.</b>"</em></li>
+<li><span class="hl">That last clause IS the mechanism — an answer you read is worth nothing. Feed in your gap file too.</span></li></ul>
+<span class="cmd">Your artifacts this week: day07-gaps.txt · grep-cheatsheet.txt · week1-state.txt</span></section>
+
+<section class="slide dense"><div class="kick">Done · and Week 2</div>
+<h1>Everything after this is these six days wearing hats</h1>
+<ul><li><b>Done when:</b> quiz attempted cold · weakest lab redone closed-book, gaps written · baseline verified &amp; backup listed · NotebookLM quiz run</li>
+<li>Week 1 was: how it boots → how you drive it → who you are → what you may touch → how you interrogate text</li>
+<li><b>Day 8:</b> processes &amp; signals — <code>ps</code>/<code>top</code>, SIGTERM vs SIGKILL, job control, and <code>/proc</code></li>
+<li>Then packages, storage, networking — and <b>Day 12</b>, where <code>boot_logger.sh</code> starts running itself</li></ul>
+<span class="cmd">Run the NotebookLM quiz tonight, before you rest. See you on Day 8.</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

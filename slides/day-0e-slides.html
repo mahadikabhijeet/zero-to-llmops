@@ -1,0 +1,100 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 0e — Users, Root, and System States</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:4.6vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.4vw;line-height:1.6}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.2vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 0 · Foundations · Day 0e of 5</div>
+<h1>Users, Root, and<br>System States</h1>
+<ul><li>Last Foundations day — the bridge back to Day 1</li>
+<li>Ends with a callback, not a re-teach</li>
+<li>~30 min theory · ~35 min lab · 10-min callback</li></ul></section>
+
+<section class="slide"><div class="kick">Recall — Day 0d</div>
+<h1>Before we start</h1>
+<ul><li>Character for an absolute path?</li>
+<li>What does <code>~</code> always mean?</li>
+<li><code>cd ..</code> vs <code>cd .</code>?</li></ul></section>
+
+<section class="slide"><div class="kick">A · Multi-user by design</div>
+<h1>What a user is</h1>
+<ul><li>Own home directory, own files, own permissions</li>
+<li><b>username</b> — friendly label · <b>UID</b> — the number underneath</li></ul></section>
+
+<section class="slide"><div class="kick">B · The power account</div>
+<h1>Root and sudo</h1>
+<ul><li><b>root</b> — can do anything, no restrictions</li>
+<li>Living as root full-time = one typo can wipe something critical</li>
+<li><code>sudo &lt;command&gt;</code> — borrow root's power, one command at a time</li>
+<li><b>Rule:</b> read a sudo command twice before Enter</li></ul></section>
+
+<section class="slide"><div class="kick">C · A term that finally lands</div>
+<h1>The "root filesystem"</h1>
+<ul><li>The actual disk mounted at <code>/</code> — the same tree you navigate daily</li>
+<li>"Root" here = the <code>/</code> you know, <b>not</b> the root user</li>
+<li>Same word, two meanings — context tells you which</li></ul></section>
+
+<section class="slide"><div class="kick">D · How much wakes up</div>
+<h1>System targets</h1>
+<ul><li><b>multi-user.target</b> — full system, no desktop — <span class="hl">most real servers</span></li>
+<li><b>graphical.target</b> — multi-user + desktop/mouse — your laptop, probably</li>
+<li>This is why CLI comfort (Day 0b) wasn't optional</li></ul></section>
+
+<section class="slide"><div class="kick">Live — who and what you are</div>
+<h1>whoami · id · sudo</h1>
+<ul><li><code>whoami</code> · <code>id</code> — UID + groups</li>
+<li><code>sudo whoami</code> → prints <code>root</code> — one command, borrowed power</li></ul></section>
+
+<section class="slide"><div class="kick">Live — feel the difference</div>
+<h1>Locked, then unlocked</h1>
+<ul><li><code>cat /etc/shadow</code> → denied · <code>sudo cat /etc/shadow</code> → works</li>
+<li><code>touch /etc/testfile</code> → denied · <code>sudo touch</code> → works, then <code>sudo rm</code> it</li></ul></section>
+
+<section class="slide"><div class="kick">Live — your machine's target</div>
+<h1>systemctl get-default</h1>
+<ul><li>Guess first: multi-user or graphical, given this machine?</li></ul>
+<span class="cmd">systemctl get-default</span></section>
+
+<section class="slide"><div class="kick">Recap &amp; homework</div>
+<h1>Root, sudo, targets</h1>
+<ul><li>Root = account, not a place · sudo = borrowed power, one command</li>
+<li>multi-user.target vs graphical.target = how much wakes up</li></ul>
+<span class="cmd">Homework: whoami + id, write why sudo matters (3-4 sentences)</span></section>
+
+<section class="slide"><div class="kick">The Day 1 callback — do NOT re-teach</div>
+<h1>Now it's solid ground</h1>
+<ul><li>Firmware → GRUB → kernel + <b>initramfs</b> → mounts the <b>real root</b></li>
+<li>PID 1 = <b>systemd</b> → chooses multi-user vs graphical <b>target</b></li>
+<li>Same words as Day 1 — now every one has ground under it</li></ul>
+<span class="cmd">Ask: explain the boot sequence back, unprompted</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

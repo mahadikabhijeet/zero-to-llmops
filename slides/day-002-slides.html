@@ -1,0 +1,111 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 2 — Core CLI & I/O Redirection</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.5vw;line-height:1.65}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.3vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 1 · Zero to LLMOps · Day 2</div>
+<h1>Core CLI &amp;<br>I/O Redirection</h1>
+<ul><li>Yesterday: how the machine boots &amp; how systemd runs it</li>
+<li>Today: the daily-driver command line — help, files, I/O redirection</li>
+<li>~28 min theory · 2h lab</li></ul></section>
+
+<section class="slide"><div class="kick">Recall — Day 1</div>
+<h1>Before we start</h1>
+<ul><li>Boot stages: power-on → login?</li>
+<li>What is <b>PID 1</b>, and what does it do?</li>
+<li>What does <code>journalctl -b</code> show?</li></ul></section>
+
+<section class="slide"><div class="kick">A · Anatomy of the command line</div>
+<h1>Terminal, shell &amp; getting help</h1>
+<ul><li><b>Terminal</b> = the window · <b>Shell</b> = bash, reads commands · <b>Console</b> = the screen</li>
+<li>Shape: <code>command  -options  arguments</code> — short <code>-l</code> / long <code>--all</code></li>
+<li><b>The #1 skill: getting help.</b> <code>man</code>, and its <b>sections</b>:
+ 1 user · 5 file formats · 8 admin — <code>man 5 passwd</code> ≠ <code>man passwd</code></li>
+<li><code>--help</code> · <code>info</code> · <code>type</code>/<code>which</code> · <code>man -k keyword</code> (apropos)</li></ul>
+<span class="cmd">man -k directory | head &nbsp;·&nbsp; type bash &nbsp;·&nbsp; ls --help | head</span></section>
+
+<section class="slide"><div class="kick">B · Filesystem hierarchy &amp; paths</div>
+<h1>Everything is a file · one tree from <span class="hl">/</span></h1>
+<ul><li><b>/etc</b> config · <b>/var</b> logs &amp; changing data · <b>/usr</b> installed software</li>
+<li><b>/opt</b> third-party — <span class="hl">our project lives here</span> · <b>/home</b> · <b>/root</b> · <b>/tmp</b></li>
+<li><b>/proc</b> &amp; <b>/sys</b> — the kernel's live state shown as files (ties to Day 1)</li>
+<li>Absolute path starts at <code>/</code> · Relative starts from here —
+ <code>.</code> here · <code>..</code> up one · <code>~</code> home · <code>-</code> previous dir</li></ul>
+<span class="cmd">ls -l / &nbsp;·&nbsp; cd /var/log &amp;&amp; cd - &amp;&amp; pwd</span></section>
+
+<section class="slide"><div class="kick">C · Core file tools — look &amp; change</div>
+<h1>Inspect &amp; manipulate</h1>
+<ul><li><code>pwd</code> where am I · <code>cd</code> move · <code>ls -l -a -h -t -r</code> list</li>
+<li><code>file</code> — what is this really? · <code>stat</code> — deep detail</li>
+<li><code>cp -r -p</code> · <code>mv</code> (move/rename) · <code>mkdir -p</code> · <code>touch</code></li>
+<li><code>ln</code> — hard link (same data) vs symlink (pointer) · <code>rm -r</code> — <b>respect it, no undo</b></li></ul>
+<span class="cmd">mkdir -p ~/lab02demo &amp;&amp; touch ~/lab02demo/a.txt &amp;&amp; ls -l ~/lab02demo</span></section>
+
+<section class="slide"><div class="kick">C · Core file tools — view &amp; find</div>
+<h1><code>cat</code>, <code>tail -f</code> &amp; <code>find</code></h1>
+<ul><li><code>cat</code> dump · <code>less</code> pager (/ n q) · <code>head</code>/<code>tail</code> top &amp; bottom</li>
+<li><b><code>tail -f</code> — the ops engineer's heartbeat</b> · <code>wc</code> counts</li>
+<li><b>find</b> — searches live · by name, type, size, mtime · <code>-exec</code></li>
+<li><b>locate</b> — fast, reads a database, but can be <b>stale</b> — <span class="hl">find for truth, locate for speed</span></li></ul>
+<span class="cmd">find /etc -name "*.conf" -mtime -30 | head</span></section>
+
+<section class="slide"><div class="kick">D · The core idea of the day</div>
+<h1>I/O redirection</h1>
+<ul><li>Three streams: <b>stdin (0)</b> · <b>stdout (1)</b> · <b>stderr (2)</b> — "file descriptors"</li>
+<li><code>&gt;</code> write (wipes) · <code>&gt;&gt;</code> append · <code>2&gt;</code> errors only</li>
+<li><code>2&gt;&amp;1</code> merge errors into output · <code>&amp;&gt;</code> shortcut · <code>&lt;</code> read stdin from file</li>
+<li><b>/dev/null</b> — the black hole; send unwanted output here</li></ul>
+<span class="cmd">ls /etc /nonexistent &gt; out.txt 2&gt; err.txt</span></section>
+
+<section class="slide"><div class="kick">D · Joining tools</div>
+<h1>Pipes &amp; chaining</h1>
+<ul><li><code>|</code> — stdout of one → stdin of next (the Unix philosophy)</li>
+<li><code>tee</code> — split a stream: watch <b>and</b> save</li>
+<li><code>;</code> always · <code>&amp;&amp;</code> if success · <code>||</code> if fail · exit code <code>echo $?</code></li>
+<li>Globbing <code>*</code> <code>?</code> <code>[a-z]</code> · always quote <code>"$var"</code> (Day 3)</li></ul>
+<span class="cmd">journalctl -b | grep -i error | wc -l</span></section>
+
+<section class="slide"><div class="kick">Lab — ~2h</div>
+<h1>To the terminal</h1>
+<ul><li>FHS expedition · file-management drills · redirection gauntlet</li>
+<li>Evolve <code>boot_logger.sh</code>: split logs (<code>2&gt;&gt;</code>, <code>tee -a</code>) + keep last 5</li>
+<li><b>Done =</b> tree correct · explain <code>2&gt;&amp;1</code> ordering · live-tail worked · logger prunes to 5</li></ul></section>
+
+<section class="slide"><div class="kick">Recap &amp; homework</div>
+<h1>Fluent with the daily driver</h1>
+<ul><li><code>man</code> + sections + <code>--help</code> + <code>man -k</code> outlasts every tool</li>
+<li>One tree from <code>/</code> · absolute vs relative paths · inspect/copy/move/delete/link</li>
+<li>Three streams — redirect or pipe any of them exactly where you want</li></ul>
+<span class="cmd">Homework: boot_logger.sh ×2 — verify with tail, wc -l, find -mtime -1</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

@@ -1,0 +1,104 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 4 — Permissions Deep: rwx/octal, umask, SUID/SGID/sticky, ACLs</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.5vw;line-height:1.65}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.3vw;padding:1.2vh 1.6vw;border-radius:10px}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 1 · Zero to LLMOps · Day 4</div>
+<h1>Permissions Deep:<br>rwx, umask, SUID/SGID/sticky, ACLs</h1>
+<ul><li>Yesterday: who you are — users, groups, <code>su</code>/<code>sudo</code></li>
+<li>Today: the bits that decide what you're actually allowed to touch</li>
+<li>~60 min theory · 2h lab · we finally lock down <code>/opt/fresher_project</code></li></ul></section>
+
+<section class="slide"><div class="kick">Recall — Days 1–3</div>
+<h1>Before we open anything up</h1>
+<ul><li>Name the fields of <code>/etc/passwd</code> in order</li>
+<li>Why <b>/sbin/nologin</b> for <code>svc_fresher</code>?</li>
+<li>The <code>usermod -G</code> trap — what does forgetting <b>-a</b> do?</li>
+<li><code>su -</code> vs <code>sudo</code> — whose password? · What group grants sudo on RHEL/Fedora?</li></ul></section>
+
+<section class="slide"><div class="kick">A · rwx and octal</div>
+<h1>Read any <code>ls -l</code> like a sentence</h1>
+<ul><li>Three classes — <b>owner (u)</b>, <b>group (g)</b>, <b>other (o)</b> — three bits each: <b>r w x</b></li>
+<li>On a <b>directory</b>: <code>x</code> = enter/traverse · <code>r</code> = list · <code>w</code> = create/delete inside</li>
+<li>Octal: <b>r=4, w=2, x=1</b>, summed per class — <code>rwxr-xr--</code> = <b>754</b></li>
+<li><code>chmod 750</code> (absolute) · <code>chmod u+x,g-w</code> (symbolic) · <code>chown user:group</code> · <code>chgrp</code></li></ul>
+<span class="cmd">ls -l /etc/passwd /etc/shadow &nbsp;·&nbsp; touch demo; ls -l demo &nbsp;·&nbsp; chmod 750 demo</span></section>
+
+<section class="slide"><div class="kick">B · umask</div>
+<h1>Why new files come out 644</h1>
+<ul><li>The mask <b>subtracted</b> from the max: <b>666</b> for files, <b>777</b> for dirs (files never get x)</li>
+<li>Default <code>umask 022</code> → new file <b>644</b>, new dir <b>755</b></li>
+<li><code>umask</code> shows it · <code>umask 027</code> → 640 / 750 (this session only)</li>
+<li>Persist: <code>~/.bashrc</code> (you) · <code>/etc/profile</code> or <code>/etc/bashrc</code> (system-wide)</li></ul>
+<span class="cmd">umask &nbsp;·&nbsp; umask 027; touch f1; mkdir d1; ls -l f1; ls -ld d1 &nbsp;·&nbsp; umask 022</span></section>
+
+<section class="slide"><div class="kick">C · Special bits — part 1</div>
+<h1>SUID — run as the owner</h1>
+<ul><li>Three bits on top of the nine: <b>SUID</b>, <b>SGID</b>, <b>sticky</b> — they solve what rwx can't</li>
+<li><b>SUID</b>: an executable runs with the <b>file owner's</b> privileges, not the caller's</li>
+<li>Classic: <code>/usr/bin/passwd</code> is SUID-root — that's how you write root-only <code>/etc/shadow</code></li>
+<li>Shows as <code>s</code> in owner's x slot: <code>-rwsr-xr-x</code> · octal <b>4000</b> · <code>chmod 4755</code> / <code>u+s</code> · <span class="hl">powerful → set rarely</span></li></ul>
+<span class="cmd">ls -l $(which passwd)</span></section>
+
+<section class="slide"><div class="kick">C · Special bits — part 2</div>
+<h1>SGID &amp; the sticky bit</h1>
+<ul><li><b>SGID on a directory</b>: new files inherit the <b>directory's group</b>, not the creator's — shared team dirs</li>
+<li>This is how <code>/opt/fresher_project/logs</code> will stay <code>devops-trainees</code>. Octal <b>2000</b> · <code>chmod 2775</code> / <code>g+s</code></li>
+<li><b>Sticky bit</b> on a dir: only the file's <b>owner</b> (or root) can delete/rename — even if world-writable</li>
+<li>Classic: <code>/tmp</code> — shows as <code>t</code>: <code>drwxrwxrwt</code> · octal <b>1000</b> · <code>chmod 1777</code> / <code>+t</code></li></ul>
+<span class="cmd">ls -ld /tmp &nbsp;·&nbsp; ls -ld /var/tmp</span></section>
+
+<section class="slide"><div class="kick">D · ACLs and chattr</div>
+<h1>When one owner + one group isn't enough</h1>
+<ul><li>Plain rwx = exactly one owner, one group. Need to grant <b>one extra user</b>? ACLs.</li>
+<li><code>getfacl file</code> · <code>setfacl -m u:priya:rx file</code> (grant) · <code>setfacl -x u:priya file</code> · <code>setfacl -b file</code> (strip)</li>
+<li>An ACL shows as a trailing <b>+</b> in <code>ls -l</code>: <code>-rw-r--r--+</code> — don't miss it</li>
+<li><code>chattr +i file</code> — <b>immutable</b>, not even root can modify/delete until <code>-i</code> · <code>lsattr</code> to view</li></ul>
+<span class="cmd">touch acltest; chmod 640 acltest &nbsp;·&nbsp; setfacl -m u:fresher01:r acltest &nbsp;·&nbsp; getfacl acltest</span></section>
+
+<section class="slide"><div class="kick">Lab — ~2h</div>
+<h1>To the terminal — <code>day-004.md</code></h1>
+<ul><li>Part 1: rwx/octal drills — convert both directions · a 700 dir <code>fresher01</code> can't enter</li>
+<li>Part 2: umask — set 027, confirm 640/750, reset. Part 3: read <code>s</code>/<code>t</code>, prove SGID inheritance &amp; sticky delete</li>
+<li>Part 4: ACLs — grant, watch the <b>+</b>, verify, revoke</li>
+<li>Part 5: lock <code>/opt/fresher_project</code> to <b>750</b>, SGID <code>logs/</code>, ACL yourself in, <code>umask 027</code> in <code>boot_logger.sh</code>, run clean</li></ul></section>
+
+<section class="slide"><div class="kick">Recap &amp; homework</div>
+<h1>Permissions with teeth</h1>
+<ul><li>9 bits (dir = list/create-delete/enter) · octal 4-2-1 · <code>rwxr-xr--</code> = 754</li>
+<li>umask subtracts from 666/777 — 022 → 644/755</li>
+<li>SUID = run as owner (<code>passwd</code>) · SGID dir = inherit group (<code>logs/</code>) · sticky = only-owner-deletes (<code>/tmp</code>)</li>
+<li>ACLs = the escape hatch, watch the <b>+</b> · <code>chattr +i</code> = immutable</li></ul>
+<span class="cmd">Homework: /opt/fresher_project 750, svc_fresher:devops-trainees, SGID logs/, ACL you · boot_logger runs clean, drops a 640 log</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>

@@ -1,0 +1,105 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 0a — What a Computer and an OS Actually Are</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0a0e14;color:#e8edf2;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+#deck{height:100vh;width:100vw;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+ padding:6vh 8vw;opacity:0;transition:opacity .25s}
+.slide.on{display:flex;opacity:1}
+.kick{color:#7fd1a8;font-size:2.2vw;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1.4vh}
+h1{font-size:5vw;line-height:1.1;margin-bottom:3vh;font-weight:800}
+ul{list-style:none;font-size:2.6vw;line-height:1.7}
+li{margin:.5vh 0;padding-left:1.6em;position:relative}
+li::before{content:"▸";color:#2aa062;position:absolute;left:0}
+li b{color:#ffcf6b;font-weight:700}
+code,.cmd{font-family:ui-monospace,Menlo,monospace}
+.cmd{display:inline-block;margin-top:3vh;background:#08131f;border:1px solid #1e5a8a;color:#7fc6ff;
+ font-size:2.4vw;padding:1.2vh 1.6vw;border-radius:10px}
+.two{display:flex;gap:5vw}.two>div{flex:1}
+.tcol h3{color:#ff9d8a;font-size:2.3vw;margin-bottom:1vh}
+#nav{position:fixed;bottom:2vh;right:2.5vw;font-size:1.6vw;color:#5a6675;font-family:ui-monospace,monospace}
+.hl{color:#7fd1a8}
+</style></head><body>
+<div id="deck">
+
+<section class="slide"><div class="kick">Phase 0 · Foundations · Day 0a of 5</div>
+<h1>What a Computer and an<br>Operating System Actually Are</h1>
+<ul><li>No terminal today — pure mental model first</li>
+<li>This is the foundation Day 1's boot story stands on</li>
+<li>~45 min theory · ~30 min guided discussion</li></ul></section>
+
+<section class="slide"><div class="kick">Recall warm-up — true day one</div>
+<h1>Before we start</h1>
+<ul><li>When you power on a phone/laptop, what happens in the first few seconds?</li>
+<li>In your own words: hardware vs software?</li>
+<li>Heard of Linux before? Where — servers, Android, elsewhere?</li></ul></section>
+
+<section class="slide"><div class="kick">A · The basic split</div>
+<h1>Hardware vs software</h1>
+<ul><li><b>Hardware</b> — anything you could drop on your foot: CPU, RAM, disk, keyboard/screen</li>
+<li><b>Software</b> — instructions on disk telling hardware what to do</li>
+<li><b>System software</b> (the OS) vs <b>application software</b> (browser, game, spreadsheet)</li></ul>
+<span class="cmd">hardware = car (engine, wheels) · software = the driver</span></section>
+
+<section class="slide"><div class="kick">B · The traffic cop</div>
+<h1>What an OS does</h1>
+<ul><li>Programs never touch hardware directly — they <b>ask the OS</b></li>
+<li>OS decides: who gets the CPU next, who gets memory, who reads a file, in what order</li>
+<li>No traffic cop → every program fights every other program → the machine falls over</li></ul></section>
+
+<section class="slide"><div class="kick">B · The OS's four jobs</div>
+<h1>Process · Memory · File · Device</h1>
+<ul><li><b>Process</b> — running many programs "at once" by switching fast between them</li>
+<li><b>Memory</b> — private RAM per program, so one bug can't corrupt another program</li>
+<li><b>File</b> — organizes data into files/folders; you never track physical disk location</li>
+<li><b>Device</b> — one common way to talk to keyboard/screen/disk/network</li></ul>
+<span class="cmd">Windows, macOS, Android, iOS — same four jobs, different style</span></section>
+
+<section class="slide"><div class="kick">C · Linux</div>
+<h1>Kernel vs distro</h1>
+<ul><li><b>Linux</b> = a kernel (Linus Torvalds, 1991) — free, open source</li>
+<li><b>Distro</b> = kernel + tools + package manager + defaults, packaged for humans</li>
+<li>Fedora, RHEL, Ubuntu, Debian — all distros, same kernel underneath</li></ul></section>
+
+<section class="slide"><div class="kick">C · Why this course</div>
+<h1>Why RHEL/Fedora</h1>
+<ul><li><b>Enterprise standard</b> — most company Linux servers run RHEL or its relatives</li>
+<li><b>Certification path</b> — RHCSA/RHCE, later in this course, recruiters recognize it</li>
+<li><b>Package family</b> — <code>dnf</code>/<code>rpm</code>, learn once, use everywhere</li></ul></section>
+
+<section class="slide"><div class="kick">D · The fork in the road</div>
+<h1>GUI vs CLI</h1>
+<ul><li><b>GUI</b> — windows, icons, mouse — friendly, slow to repeat, hard to automate</li>
+<li><b>CLI</b> — typed commands — faster once learned, and <span class="hl">scriptable</span></li>
+<li>Scriptable = the seed of automation = the point of DevOps</li>
+<li>Most real servers have <b>no screen, no mouse</b> — CLI is the only way in</li></ul></section>
+
+<section class="slide"><div class="kick">Guided discussion — no typing yet</div>
+<h1>Reason it through</h1>
+<ul><li>Power button → login screen: guess the steps, in order</li>
+<li>Pick 3 phone apps — OS job, or just using OS services?</li>
+<li>Name 5 devices around you that might run Linux</li></ul></section>
+
+<section class="slide"><div class="kick">Recap &amp; homework</div>
+<h1>Five things to hold onto</h1>
+<ul><li>Hardware = touchable · Software = instructions</li>
+<li>OS = traffic cop between programs and hardware</li>
+<li>Four jobs: process, memory, file, device</li>
+<li>Linux = kernel · distro = kernel + tools (Fedora, RHEL)</li>
+<li>CLI over GUI: faster, scriptable, what real servers give you</li></ul>
+<span class="cmd">Homework: name 5 Linux devices around you + why</span></section>
+
+</div>
+<div id="nav">← → space</div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){slides.forEach(s=>s.classList.remove('on'));i=(n+slides.length)%slides.length;slides[i].classList.add('on');}
+show(0);
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key===' ')show(i+1);
+ if(e.key==='ArrowLeft')show(i-1);
+});
+</script>
+</body></html>
