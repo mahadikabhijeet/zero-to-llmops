@@ -199,7 +199,7 @@ start at Day 1.
 | [142](lessons/phase-5-sre-observability-gitops/day-142.md) | Backstage II: software template (scaffold a new service in 5 min), TechDocs |
 | [143](lessons/phase-5-sre-observability-gitops/day-143.md) | DevSecOps: SAST/dep scanning in CI (trivy/grype), SBOM, OPA/Gatekeeper policy on cluster |
 | [144](lessons/phase-5-sre-observability-gitops/day-144.md) | Reliability patterns: timeouts/retries/backoff, circuit breakers, graceful degradation, health-check design |
-| [145](lessons/phase-5-sre-observability-gitops/day-145.md) | Game day: full live incident simulation (owner breaks prod, brother on-call, postmortem after) |
+| [145](lessons/phase-5-sre-observability-gitops/day-145.md) | Game day: full live incident simulation (instructor breaks prod, learner on-call, postmortem after) |
 | [146](lessons/phase-5-sre-observability-gitops/day-146.md) | SRE interview prep: troubleshooting drills, "design monitoring for X", SLO math questions |
 | [147](lessons/phase-5-sre-observability-gitops/day-147.md) | REVIEW |
 | [148](lessons/phase-5-sre-observability-gitops/day-148.md) | **Resume checkpoint #2** + portfolio polish: README audit, architecture diagrams, pin repos, LinkedIn rewrite |
