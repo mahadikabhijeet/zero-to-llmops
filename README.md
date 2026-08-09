@@ -116,8 +116,10 @@ before the video is.
 | 1 | Boot process and systemd | [watch](https://youtu.be/_TyWNPZflKk) |
 | 2 | Core CLI, FHS, I/O redirection | [watch](https://youtu.be/hotNDMmfwHA) |
 | 3 | Users, groups, passwd, shadow, sudoers | [watch](https://youtu.be/M5r-l7Peips) |
-| 4 | Permissions deep dive: octal, SUID, ACLs | released soon |
+| 4 | Permissions deep dive: octal, umask, SUID, SGID, sticky, ACLs | [watch](https://youtu.be/YPIsAVB6xfw) |
 | 5+ | Written lessons available now in `lessons/` | in production |
+
+New days are added to `lessons/` as they are written, usually ahead of the video.
 
 ## Using this without the videos
 
